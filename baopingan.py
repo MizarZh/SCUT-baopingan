@@ -15,11 +15,12 @@ submitHeaders = {
     'Content-Type': 'application/json;charset=utf-8'
 }
 config = json.load(open('config.json'))  # 密码账号配置
-submitData = json.load(open('submit.json', encoding='utf8'))  # 上报资料设置
+
 # 网址
 url = 'https://sso.scut.edu.cn/cas/login?service=https%3A%2F%2Fiamok.scut.edu.cn%2Fcas%2Flogin'
 loginPostUrl = 'https://sso.scut.edu.cn/cas/login?service=https://iamok.scut.edu.cn/cas/login'
 submitPostUrl = 'https://iamok.scut.edu.cn/mobile/recordPerDay/submitRecordPerDay'
+getRecordPerDay = 'https://iamok.scut.edu.cn/mobile/recordPerDay/getRecordPerDay'
 
 session = requests.Session()
 # 登录
@@ -45,13 +46,8 @@ loginReq = session.post(loginPostUrl, postData, headers=headers)
 
 # 报平安
 today = str(datetime.date.today())
-# 设置时间为今日0时
-submitData["recordDate"] = submitData[
-    "visitingRelativesOrTravelToWenzhouDate"] = submitData[
-        "recordShowDate"] = round(time.mktime(time.strptime(today,
-                                                            '%Y-%m-%d')))
-# 设置时间为现在
-submitData["createTime"] = submitData["updateTime"] = round(time.time())
-submitReq = session.post(submitPostUrl,
-                         json.dumps(submitData),
-                         headers=submitHeaders)
+
+# 直接通过getRecordPerDay拿数据
+submitData = json.dumps(
+    json.loads(session.get(getRecordPerDay, headers=headers).text)["data"])
+submitReq = session.post(submitPostUrl, submitData, headers=submitHeaders)
